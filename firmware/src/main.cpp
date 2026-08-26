@@ -23,6 +23,12 @@ NeighborManager gNeighbors;
 NodeState gNodeState = NodeState::DISCOVER_NEIGHBORS;
 bool gHasSeenNeighbor = false;
 
+RoutingWeights routingWeights() {
+  return RoutingWeights{SahayakConfig::kRssiWeight,
+                        SahayakConfig::kHopWeight,
+                        SahayakConfig::kQueueWeight};
+}
+
 void emitEvent(const char* type, uint8_t origin, uint32_t sequence,
               PacketOutcome outcome, int nextHop = kBroadcastNode,
               uint8_t hop = 0, uint8_t ttl = 0, int rssi = 0,
@@ -144,15 +150,17 @@ void refreshNodeState() {
     gNodeState = NodeState::DISCOVER_NEIGHBORS;
     return;
   }
-  gNodeState = routeHealthState(
+  gNodeState = dynamicRouteHealthState(
       gNeighbors, SahayakConfig::kNodeId, SahayakConfig::kBaseStationId,
-      SahayakConfig::kStaticNextHop, nowMs);
+      kBroadcastNode, nowMs, routingWeights());
 }
 
 uint8_t advertisedHopCount() {
   if (SahayakConfig::kNodeId == SahayakConfig::kBaseStationId) return 0;
-  const uint8_t neighborHop = gNeighbors.advertisedHopFor(
-      SahayakConfig::kStaticNextHop, millis());
+  const uint8_t nextHop = gNeighbors.selectNextHop(
+      SahayakConfig::kNodeId, kBroadcastNode, millis(), routingWeights());
+  if (nextHop == kBroadcastNode) return kUnknownHopCount;
+  const uint8_t neighborHop = gNeighbors.advertisedHopFor(nextHop, millis());
   if (neighborHop == kUnknownHopCount || neighborHop >= kUnknownHopCount - 1) {
     return kUnknownHopCount;
   }
@@ -178,15 +186,17 @@ void sendHello() {
 
 void sendEmergencyReport() {
   refreshNodeState();
-  if (SahayakConfig::kNodeId != SahayakConfig::kBaseStationId &&
-      gNodeState == NodeState::ISOLATED) {
-    emitTextEvent("REPORT", PacketOutcome::NO_ROUTE);
-    return;
-  }
   const uint8_t payload[] = {'B', 'U', 'T', 'T', 'O', 'N'};
   Packet packet = makePacket(MessageType::REPORT, SahayakConfig::kBaseStationId,
                              3, payload, sizeof(payload));
-  sendPacket(packet, SahayakConfig::kStaticNextHop);
+  const uint8_t nextHop = gNeighbors.selectNextHop(
+      SahayakConfig::kNodeId, kBroadcastNode, millis(), routingWeights());
+  if (SahayakConfig::kNodeId != SahayakConfig::kBaseStationId &&
+      nextHop == kBroadcastNode) {
+    emitTextEvent("REPORT", PacketOutcome::NO_ROUTE);
+    return;
+  }
+  sendPacket(packet, nextHop);
 }
 
 void sendAck(const Packet& received) {
@@ -247,9 +257,9 @@ void handleReceivedPacket() {
   if (packet.header.destinationId != SahayakConfig::kNodeId &&
       packet.header.destinationId != kBroadcastNode) {
     if (packet.header.messageType == MessageType::REPORT) {
-      const uint8_t nextHop =
-          gNodeState == NodeState::ISOLATED ? kBroadcastNode
-                                             : SahayakConfig::kStaticNextHop;
+      const uint8_t nextHop = gNeighbors.selectNextHop(
+          SahayakConfig::kNodeId, packet.header.senderId, millis(),
+          routingWeights());
       const ForwardingDecision decision = prepareForward(
           packet, SahayakConfig::kNodeId, nextHop,
           millis(), gDuplicateCache, gForwardQueue);

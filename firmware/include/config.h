@@ -12,6 +12,12 @@ constexpr uint8_t kBaseStationId = 1;
 // field node -> relay, relay -> base station. Dynamic routing replaces this.
 constexpr uint8_t kStaticNextHop = 1;
 
+// Dynamic routing weights are normalized internally; these values need not sum
+// to a specific number. Keep them configurable for controlled experiments.
+constexpr uint8_t kRssiWeight = 50;
+constexpr uint8_t kHopWeight = 25;
+constexpr uint8_t kQueueWeight = 25;
+
 // Confirm these against the purchased radio module and local operating rules.
 // Provisional in-band test frequency; confirm the permitted channel before RF testing.
 constexpr long kLoRaFrequencyHz = 866500000L;

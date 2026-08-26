@@ -122,6 +122,68 @@ uint8_t NeighborManager::queueLengthFor(uint8_t nodeId, uint32_t nowMs) const {
   return record == nullptr ? 255 : record->queueLength;
 }
 
+uint8_t NeighborManager::selectNextHop(uint8_t localId, uint8_t previousHop,
+                                       uint32_t nowMs,
+                                       RoutingWeights weights) const {
+  const uint16_t weightTotal = static_cast<uint16_t>(weights.rssi) +
+                               static_cast<uint16_t>(weights.hop) +
+                               static_cast<uint16_t>(weights.queue);
+  if (weightTotal == 0) return kBroadcastNode;
+
+  int32_t bestScore = -1;
+  int16_t bestRssi = -32768;
+  uint8_t bestHop = kUnknownHopCount;
+  uint8_t bestQueue = 255;
+  uint8_t bestNode = kBroadcastNode;
+
+  for (size_t i = 0; i < kNeighborTableCapacity; ++i) {
+    const NeighborRecord& record = records_[i];
+    if (!record.valid || record.nodeId == localId ||
+        record.nodeId == previousHop) {
+      continue;
+    }
+    if (static_cast<uint32_t>(nowMs - record.lastHeardMs) >
+        kNeighborExpiryMs) {
+      continue;
+    }
+    if (record.nodeState != NodeState::CONNECTED &&
+        record.nodeState != NodeState::DEGRADED) {
+      continue;
+    }
+    if (record.advertisedHopCount == kUnknownHopCount) continue;
+
+    const int32_t rssiScore = constrain(
+        static_cast<int32_t>(record.lastRssiDbm) + 120, 0, 55) * 100 / 55;
+    const int32_t hopScore = 100 /
+        (static_cast<int32_t>(record.advertisedHopCount) + 1);
+    const int32_t queueScore = 100 /
+        (static_cast<int32_t>(record.queueLength) + 1);
+    const int32_t score =
+        (static_cast<int32_t>(weights.rssi) * rssiScore +
+         static_cast<int32_t>(weights.hop) * hopScore +
+         static_cast<int32_t>(weights.queue) * queueScore) /
+        weightTotal;
+
+    const bool better = score > bestScore ||
+        (score == bestScore && record.advertisedHopCount < bestHop) ||
+        (score == bestScore && record.advertisedHopCount == bestHop &&
+         record.lastRssiDbm > bestRssi) ||
+        (score == bestScore && record.advertisedHopCount == bestHop &&
+         record.lastRssiDbm == bestRssi && record.queueLength < bestQueue) ||
+        (score == bestScore && record.advertisedHopCount == bestHop &&
+         record.lastRssiDbm == bestRssi && record.queueLength == bestQueue &&
+         record.nodeId < bestNode);
+    if (better) {
+      bestScore = score;
+      bestRssi = record.lastRssiDbm;
+      bestHop = record.advertisedHopCount;
+      bestQueue = record.queueLength;
+      bestNode = record.nodeId;
+    }
+  }
+  return bestNode;
+}
+
 NodeState routeHealthState(const NeighborManager& neighbors, uint8_t localId,
                            uint8_t baseStationId, uint8_t staticNextHop,
                            uint32_t nowMs) {
@@ -132,6 +194,25 @@ NodeState routeHealthState(const NeighborManager& neighbors, uint8_t localId,
   if (!isNeighborStateHealthy(next->nodeState)) return NodeState::AT_RISK;
   if (next->advertisedHopCount == kUnknownHopCount ||
       next->nodeState == NodeState::DEGRADED) {
+    return NodeState::DEGRADED;
+  }
+  return NodeState::CONNECTED;
+}
+
+NodeState dynamicRouteHealthState(const NeighborManager& neighbors,
+                                  uint8_t localId, uint8_t baseStationId,
+                                  uint8_t previousHop, uint32_t nowMs,
+                                  RoutingWeights weights) {
+  if (localId == baseStationId) return NodeState::CONNECTED;
+
+  const uint8_t nextHop = neighbors.selectNextHop(localId, previousHop,
+                                                   nowMs, weights);
+  if (nextHop == kBroadcastNode) {
+    return neighbors.activeCount(nowMs) == 0 ? NodeState::ISOLATED
+                                             : NodeState::AT_RISK;
+  }
+  const NeighborRecord* selected = neighbors.find(nextHop, nowMs);
+  if (selected != nullptr && selected->nodeState == NodeState::DEGRADED) {
     return NodeState::DEGRADED;
   }
   return NodeState::CONNECTED;

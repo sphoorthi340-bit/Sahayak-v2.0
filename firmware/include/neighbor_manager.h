@@ -26,6 +26,14 @@ struct NeighborRecord {
   uint32_t lastHeardMs;
 };
 
+struct RoutingWeights {
+  uint8_t rssi;
+  uint8_t hop;
+  uint8_t queue;
+};
+
+constexpr RoutingWeights kDefaultRoutingWeights{50, 25, 25};
+
 class NeighborManager {
  public:
   NeighborManager();
@@ -38,6 +46,9 @@ class NeighborManager {
   size_t activeCount(uint32_t nowMs) const;
   uint8_t advertisedHopFor(uint8_t nodeId, uint32_t nowMs) const;
   uint8_t queueLengthFor(uint8_t nodeId, uint32_t nowMs) const;
+  uint8_t selectNextHop(uint8_t localId, uint8_t previousHop,
+                        uint32_t nowMs,
+                        RoutingWeights weights = kDefaultRoutingWeights) const;
 
  private:
   NeighborRecord records_[kNeighborTableCapacity];
@@ -49,5 +60,10 @@ class NeighborManager {
 NodeState routeHealthState(const NeighborManager& neighbors, uint8_t localId,
                            uint8_t baseStationId, uint8_t staticNextHop,
                            uint32_t nowMs);
+
+NodeState dynamicRouteHealthState(const NeighborManager& neighbors,
+                                  uint8_t localId, uint8_t baseStationId,
+                                  uint8_t previousHop, uint32_t nowMs,
+                                  RoutingWeights weights = kDefaultRoutingWeights);
 
 }  // namespace Sahayak

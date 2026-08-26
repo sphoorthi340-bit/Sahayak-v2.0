@@ -53,6 +53,7 @@ Read these files first:
 
 - [`docs/protocol.md`](docs/protocol.md)
 - [`docs/neighbor_discovery.md`](docs/neighbor_discovery.md)
+- [`docs/dynamic_routing.md`](docs/dynamic_routing.md)
 - [`docs/pin_map.md`](docs/pin_map.md)
 - [`docs/test_plan.md`](docs/test_plan.md)
 - [`docs/decisions.md`](docs/decisions.md)
