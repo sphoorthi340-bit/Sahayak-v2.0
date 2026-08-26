@@ -94,7 +94,7 @@ bool sendPacket(Packet& packet, uint8_t nextHop) {
   packet.header.senderId = SahayakConfig::kNodeId;
   packet.header.previousHop = SahayakConfig::kNodeId;
 
-  uint8_t wire[kRadioBufferBytes]{};
+  uint8_t wire[SahayakConfig::kRadioBufferBytes]{};
   size_t wireLength = 0;
   if (!serializePacket(packet, wire, sizeof(wire), wireLength)) {
     emitEvent(messageTypeName(packet.header.messageType), packet.header.originId,
@@ -171,7 +171,7 @@ void handleReceivedPacket() {
   const int packetSize = LoRa.parsePacket();
   if (packetSize <= 0) return;
 
-  uint8_t wire[kRadioBufferBytes]{};
+  uint8_t wire[SahayakConfig::kRadioBufferBytes]{};
   size_t length = 0;
   while (LoRa.available() && length < sizeof(wire)) {
     wire[length++] = static_cast<uint8_t>(LoRa.read());
