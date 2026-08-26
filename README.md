@@ -57,6 +57,7 @@ Read these files first:
 - [`docs/reliability.md`](docs/reliability.md)
 - [`docs/human_relay.md`](docs/human_relay.md)
 - [`docs/priority_experiments.md`](docs/priority_experiments.md)
+- [`docs/progress_and_hardware_report.md`](docs/progress_and_hardware_report.md)
 - [`docs/pin_map.md`](docs/pin_map.md)
 - [`docs/test_plan.md`](docs/test_plan.md)
 - [`docs/decisions.md`](docs/decisions.md)
@@ -66,5 +67,6 @@ Read these files first:
 - [`base_station/README.md`](base_station/README.md)
 - [`docs/software_first_status.md`](docs/software_first_status.md)
 - [`tests/README.md`](tests/README.md)
+- [`tests/hardware/two_node_pair_test.md`](tests/hardware/two_node_pair_test.md)
 
 The firmware scaffold is intentionally conservative. It does not yet implement the complete mesh algorithm. It establishes the packet format, serial telemetry, and a testable two-node communication foundation. The software-only simulator now supports deterministic routing comparisons and controlled failure-risk scenarios while physical hardware testing is postponed.
