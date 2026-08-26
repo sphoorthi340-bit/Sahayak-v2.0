@@ -52,6 +52,7 @@ The repository is currently at **Milestone 0: software foundation**. The first t
 Read these files first:
 
 - [`docs/protocol.md`](docs/protocol.md)
+- [`docs/neighbor_discovery.md`](docs/neighbor_discovery.md)
 - [`docs/pin_map.md`](docs/pin_map.md)
 - [`docs/test_plan.md`](docs/test_plan.md)
 - [`docs/decisions.md`](docs/decisions.md)

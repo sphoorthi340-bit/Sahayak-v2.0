@@ -96,8 +96,10 @@ ForwardingDecision prepareForward(const Packet& received, uint8_t localId,
   if (received.header.destinationId == localId) {
     return {ForwardAction::DELIVER, PacketOutcome::DELIVERED, localId};
   }
-  if (nextHop == localId || nextHop == received.header.previousHop ||
-      nextHop == kBroadcastNode) {
+  if (nextHop == kBroadcastNode) {
+    return {ForwardAction::DROP, PacketOutcome::NO_ROUTE, nextHop};
+  }
+  if (nextHop == localId || nextHop == received.header.previousHop) {
     return {ForwardAction::DROP, PacketOutcome::ROUTE_LOOP, nextHop};
   }
 

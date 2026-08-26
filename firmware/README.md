@@ -12,11 +12,15 @@ The current firmware scaffold implements:
 - Three-node forwarding queue with TTL decrementing.
 - Fixed-size duplicate suppression cache.
 - Priority-aware queueing and explicit route-loop/queue-full outcomes.
+- Fixed-size neighbor table populated from `HELLO` packets.
+- RSSI/SNR and advertised-hop tracking for each fresh neighbor.
+- 30-second stale-neighbor expiry.
+- `DISCOVER_NEIGHBORS`, `CONNECTED`, `DEGRADED`, `AT_RISK`, and `ISOLATED` route-health states.
 - Radio CRC enablement.
 - RSSI and SNR telemetry.
 - Machine-readable serial `EVENT` records.
 
-Three-node forwarding is now implemented using a configurable static next hop. Dynamic neighbor-based route selection is still disabled until the forwarding milestone has been tested on real hardware.
+Three-node forwarding is now implemented using a configurable static next hop. Neighbor discovery and route expiry are active, but dynamic multi-metric next-hop selection is still disabled until this milestone has been tested on real hardware.
 
 ## Build with PlatformIO
 
