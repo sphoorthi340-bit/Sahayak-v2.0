@@ -9,11 +9,14 @@ The current firmware scaffold implements:
 - Periodic `HELLO` packets.
 - Button- or serial-triggered `REPORT` packets.
 - Direct packet delivery and ACK generation.
+- Three-node forwarding queue with TTL decrementing.
+- Fixed-size duplicate suppression cache.
+- Priority-aware queueing and explicit route-loop/queue-full outcomes.
 - Radio CRC enablement.
 - RSSI and SNR telemetry.
 - Machine-readable serial `EVENT` records.
 
-Mesh forwarding and dynamic route selection are intentionally disabled until the direct two-node test is successful.
+Three-node forwarding is now implemented using a configurable static next hop. Dynamic neighbor-based route selection is still disabled until the forwarding milestone has been tested on real hardware.
 
 ## Build with PlatformIO
 
@@ -52,4 +55,4 @@ Set the node identity and pins in [`include/config.h`](include/config.h) before 
 
 ## Important limitations
 
-The first milestone uses direct transmission. A packet received by a node that is not its destination is currently reported as `NO_ROUTE` rather than forwarded. This is deliberate: forwarding will be implemented and tested as a separate milestone after the packet path is understood.
+The current forwarding milestone uses a static next hop configured in `include/config.h`. Set the field node’s next hop to the relay ID and the relay node’s next hop to the base ID before flashing. Dynamic route selection will replace this configuration later.

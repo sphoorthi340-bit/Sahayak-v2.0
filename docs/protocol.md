@@ -4,7 +4,7 @@
 
 This document defines the first interoperable packet format for Sahayak field nodes and the base-station gateway. The format is intentionally small and explicit so that firmware, logging, and experiments can be developed independently.
 
-Version 0.1 supports point-to-point `HELLO`, `REPORT`, and `ACK` messages. Multi-hop forwarding, route advertisements, and failure-risk messages are reserved for later protocol versions but the fields needed for them are included now.
+Version 0.1 supports point-to-point `HELLO`, `REPORT`, and `ACK` messages and now includes the first three-node forwarding behavior. Dynamic route advertisements and failure-risk messages remain future extensions, but the fields needed for them are included now.
 
 ## Node identifiers
 
@@ -174,6 +174,10 @@ t_ms,node,type,origin,seq,prev,next,hop,ttl,rssi,snr,queue,retry,state,outcome
 ```
 
 The parser must tolerate fields being absent in early messages but should mark them as missing rather than guessing values.
+
+## Current implementation boundary
+
+The first three-node forwarding implementation uses a static next hop configured in firmware. It supports TTL decrementing, duplicate suppression, bounded queueing, and explicit route-loop protection. It does not yet perform dynamic neighbor-based route selection or end-to-end ACK path reversal.
 
 ## Reserved future fields
 

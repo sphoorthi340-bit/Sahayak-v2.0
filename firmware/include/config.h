@@ -8,6 +8,10 @@ namespace SahayakConfig {
 constexpr uint8_t kNodeId = 2;
 constexpr uint8_t kBaseStationId = 1;
 
+// First three-node milestone only. Set this per flashed node, for example:
+// field node -> relay, relay -> base station. Dynamic routing replaces this.
+constexpr uint8_t kStaticNextHop = 1;
+
 // Confirm these against the purchased radio module and local operating rules.
 // Provisional in-band test frequency; confirm the permitted channel before RF testing.
 constexpr long kLoRaFrequencyHz = 866500000L;

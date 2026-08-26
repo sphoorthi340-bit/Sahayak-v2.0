@@ -5,6 +5,7 @@
 
 #include "config.h"
 #include "protocol.h"
+#include "forwarding.h"
 
 using namespace Sahayak;
 
@@ -15,6 +16,8 @@ unsigned long gLastHelloMs = 0;
 int gLastButtonReading = HIGH;
 int gStableButtonState = HIGH;
 unsigned long gLastButtonChangeMs = 0;
+DuplicateCache gDuplicateCache;
+PacketQueue gForwardQueue;
 
 void emitEvent(const char* type, uint8_t origin, uint32_t sequence,
               PacketOutcome outcome, int nextHop = kBroadcastNode,
@@ -92,7 +95,6 @@ Packet makePacket(MessageType type, uint8_t destination, uint8_t priority,
 
 bool sendPacket(Packet& packet, uint8_t nextHop) {
   packet.header.senderId = SahayakConfig::kNodeId;
-  packet.header.previousHop = SahayakConfig::kNodeId;
 
   uint8_t wire[SahayakConfig::kRadioBufferBytes]{};
   size_t wireLength = 0;
@@ -150,7 +152,7 @@ void sendEmergencyReport() {
   const uint8_t payload[] = {'B', 'U', 'T', 'T', 'O', 'N'};
   Packet packet = makePacket(MessageType::REPORT, SahayakConfig::kBaseStationId,
                              3, payload, sizeof(payload));
-  sendPacket(packet, SahayakConfig::kBaseStationId);
+  sendPacket(packet, SahayakConfig::kStaticNextHop);
 }
 
 void sendAck(const Packet& received) {
@@ -194,11 +196,20 @@ void handleReceivedPacket() {
 
   if (packet.header.destinationId != SahayakConfig::kNodeId &&
       packet.header.destinationId != kBroadcastNode) {
-    // Forwarding is intentionally not enabled until the three-node milestone.
-    emitEvent(messageTypeName(packet.header.messageType), packet.header.originId,
-              packet.header.sequence, PacketOutcome::NO_ROUTE,
-              packet.header.destinationId, packet.header.hopCount,
-              packet.header.ttl, rssi, snr);
+    if (packet.header.messageType == MessageType::REPORT) {
+      const ForwardingDecision decision = prepareForward(
+          packet, SahayakConfig::kNodeId, SahayakConfig::kStaticNextHop,
+          millis(), gDuplicateCache, gForwardQueue);
+      emitEvent(messageTypeName(packet.header.messageType), packet.header.originId,
+                packet.header.sequence, decision.outcome,
+                decision.nextHop, packet.header.hopCount, packet.header.ttl,
+                rssi, snr, gForwardQueue.size());
+    } else {
+      emitEvent(messageTypeName(packet.header.messageType), packet.header.originId,
+                packet.header.sequence, PacketOutcome::NO_ROUTE,
+                packet.header.destinationId, packet.header.hopCount,
+                packet.header.ttl, rssi, snr);
+    }
     LoRa.receive();
     return;
   }
@@ -229,6 +240,14 @@ void handleEmergencyButton() {
       sendEmergencyReport();
     }
   }
+}
+
+void flushForwardQueue() {
+  if (gForwardQueue.empty()) return;
+
+  QueuedPacket queued{};
+  if (!gForwardQueue.dequeue(queued)) return;
+  sendPacket(queued.packet, queued.nextHop);
 }
 
 void handleSerialCommand() {
@@ -278,6 +297,7 @@ void setup() {
 
 void loop() {
   handleReceivedPacket();
+  flushForwardQueue();
   handleEmergencyButton();
   handleSerialCommand();
 

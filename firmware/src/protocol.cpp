@@ -83,6 +83,8 @@ const char* outcomeName(PacketOutcome outcome) {
     case PacketOutcome::NO_ROUTE: return "NO_ROUTE";
     case PacketOutcome::TTL_EXPIRED: return "TTL_EXPIRED";
     case PacketOutcome::RETRY_LIMIT_REACHED: return "RETRY_LIMIT_REACHED";
+    case PacketOutcome::ROUTE_LOOP: return "ROUTE_LOOP";
+    case PacketOutcome::QUEUE_FULL: return "QUEUE_FULL";
     default: return "UNKNOWN";
   }
 }

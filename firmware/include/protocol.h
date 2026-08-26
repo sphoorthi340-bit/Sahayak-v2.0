@@ -47,6 +47,8 @@ enum class PacketOutcome : uint8_t {
   NO_ROUTE = 8,
   TTL_EXPIRED = 9,
   RETRY_LIMIT_REACHED = 10,
+  ROUTE_LOOP = 11,
+  QUEUE_FULL = 12,
 };
 
 // Version 0.1 header. Serialization is deliberately kept in packet.cpp so
