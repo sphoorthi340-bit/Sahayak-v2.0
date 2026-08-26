@@ -1,0 +1,16 @@
+{
+  "scenario_id": "priority-surge-001",
+  "description": "Routine reports arrive before and during a burst of emergency reports",
+  "arrivals": [
+    {"packet_id": 1, "arrival_ms": 0, "priority": 0, "service_ms": 100},
+    {"packet_id": 2, "arrival_ms": 0, "priority": 1, "service_ms": 100},
+    {"packet_id": 3, "arrival_ms": 0, "priority": 0, "service_ms": 100},
+    {"packet_id": 4, "arrival_ms": 50, "priority": 3, "service_ms": 100},
+    {"packet_id": 5, "arrival_ms": 50, "priority": 3, "service_ms": 100},
+    {"packet_id": 6, "arrival_ms": 50, "priority": 2, "service_ms": 100},
+    {"packet_id": 7, "arrival_ms": 50, "priority": 1, "service_ms": 100},
+    {"packet_id": 8, "arrival_ms": 150, "priority": 3, "service_ms": 100},
+    {"packet_id": 9, "arrival_ms": 150, "priority": 0, "service_ms": 100},
+    {"packet_id": 10, "arrival_ms": 250, "priority": 2, "service_ms": 100}
+  ]
+}

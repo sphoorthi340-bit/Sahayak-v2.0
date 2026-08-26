@@ -55,6 +55,8 @@ Read these files first:
 - [`docs/neighbor_discovery.md`](docs/neighbor_discovery.md)
 - [`docs/dynamic_routing.md`](docs/dynamic_routing.md)
 - [`docs/reliability.md`](docs/reliability.md)
+- [`docs/human_relay.md`](docs/human_relay.md)
+- [`docs/priority_experiments.md`](docs/priority_experiments.md)
 - [`docs/pin_map.md`](docs/pin_map.md)
 - [`docs/test_plan.md`](docs/test_plan.md)
 - [`docs/decisions.md`](docs/decisions.md)
