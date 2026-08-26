@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# PlatformIO
+.pio/
+.vscode/
+
+# Local serial and database outputs
+*.sqlite
+*.sqlite3
+experiments/raw_logs/*.csv
+experiments/raw_logs/*.jsonl
+experiments/processed_results/*
+!experiments/processed_results/.gitkeep
+
+# Secrets and local configuration
+.env
+.env.*
+*.pem
+*.key
+secrets/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.idea/

@@ -1,0 +1,4 @@
+pyserial>=3.5
+networkx>=3.2
+pandas>=2.0
+matplotlib>=3.8
