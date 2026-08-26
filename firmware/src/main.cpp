@@ -7,6 +7,7 @@
 #include "protocol.h"
 #include "forwarding.h"
 #include "neighbor_manager.h"
+#include "reliability.h"
 
 using namespace Sahayak;
 
@@ -22,11 +23,25 @@ PacketQueue gForwardQueue;
 NeighborManager gNeighbors;
 NodeState gNodeState = NodeState::DISCOVER_NEIGHBORS;
 bool gHasSeenNeighbor = false;
+ReliabilityManager gReliability;
+uint8_t gCurrentNextHop = kBroadcastNode;
 
 RoutingWeights routingWeights() {
   return RoutingWeights{SahayakConfig::kRssiWeight,
                         SahayakConfig::kHopWeight,
                         SahayakConfig::kQueueWeight};
+}
+
+uint8_t chooseNextHop(uint8_t previousHop) {
+  const uint8_t selected = gNeighbors.selectStableNextHop(
+      SahayakConfig::kNodeId, previousHop, gCurrentNextHop, millis(),
+      routingWeights(), SahayakConfig::kRouteHysteresisPoints);
+  if (selected != kBroadcastNode) {
+    gCurrentNextHop = selected;
+  } else if (!gNeighbors.isFresh(gCurrentNextHop, millis())) {
+    gCurrentNextHop = kBroadcastNode;
+  }
+  return selected;
 }
 
 void emitEvent(const char* type, uint8_t origin, uint32_t sequence,
@@ -103,7 +118,7 @@ Packet makePacket(MessageType type, uint8_t destination, uint8_t priority,
   return packet;
 }
 
-bool sendPacket(Packet& packet, uint8_t nextHop) {
+bool sendPacket(Packet& packet, uint8_t nextHop, bool expectAck = false) {
   packet.header.senderId = SahayakConfig::kNodeId;
 
   uint8_t wire[SahayakConfig::kRadioBufferBytes]{};
@@ -128,11 +143,28 @@ bool sendPacket(Packet& packet, uint8_t nextHop) {
   const int result = LoRa.endPacket();
   LoRa.receive();
 
+  const bool sent = result == 1;
   emitEvent(messageTypeName(packet.header.messageType), packet.header.originId,
             packet.header.sequence,
-            result == 1 ? PacketOutcome::FORWARDED : PacketOutcome::NO_ROUTE,
-            nextHop, packet.header.hopCount, packet.header.ttl);
-  return result == 1;
+            sent ? PacketOutcome::FORWARDED : PacketOutcome::NO_ROUTE,
+            nextHop, packet.header.hopCount, packet.header.ttl,
+            0, 0.0f, gForwardQueue.size());
+  if (sent && expectAck && packet.header.messageType == MessageType::REPORT) {
+    if (!gReliability.track(packet, nextHop, millis(),
+                            SahayakConfig::kMaxRetries)) {
+      emitEvent("REPORT", packet.header.originId, packet.header.sequence,
+                PacketOutcome::QUEUE_FULL, nextHop, packet.header.hopCount,
+                packet.header.ttl, 0, 0.0f, gForwardQueue.size());
+    }
+  }
+  return sent;
+}
+
+uint32_t readU32LittleEndian(const uint8_t* input) {
+  return static_cast<uint32_t>(input[0]) |
+         (static_cast<uint32_t>(input[1]) << 8u) |
+         (static_cast<uint32_t>(input[2]) << 16u) |
+         (static_cast<uint32_t>(input[3]) << 24u);
 }
 
 void writeU32LittleEndian(uint8_t* out, uint32_t value) {
@@ -157,8 +189,7 @@ void refreshNodeState() {
 
 uint8_t advertisedHopCount() {
   if (SahayakConfig::kNodeId == SahayakConfig::kBaseStationId) return 0;
-  const uint8_t nextHop = gNeighbors.selectNextHop(
-      SahayakConfig::kNodeId, kBroadcastNode, millis(), routingWeights());
+  const uint8_t nextHop = chooseNextHop(kBroadcastNode);
   if (nextHop == kBroadcastNode) return kUnknownHopCount;
   const uint8_t neighborHop = gNeighbors.advertisedHopFor(nextHop, millis());
   if (neighborHop == kUnknownHopCount || neighborHop >= kUnknownHopCount - 1) {
@@ -189,14 +220,13 @@ void sendEmergencyReport() {
   const uint8_t payload[] = {'B', 'U', 'T', 'T', 'O', 'N'};
   Packet packet = makePacket(MessageType::REPORT, SahayakConfig::kBaseStationId,
                              3, payload, sizeof(payload));
-  const uint8_t nextHop = gNeighbors.selectNextHop(
-      SahayakConfig::kNodeId, kBroadcastNode, millis(), routingWeights());
+  const uint8_t nextHop = chooseNextHop(kBroadcastNode);
   if (SahayakConfig::kNodeId != SahayakConfig::kBaseStationId &&
       nextHop == kBroadcastNode) {
     emitTextEvent("REPORT", PacketOutcome::NO_ROUTE);
     return;
   }
-  sendPacket(packet, nextHop);
+  sendPacket(packet, nextHop, true);
 }
 
 void sendAck(const Packet& received) {
@@ -235,6 +265,21 @@ void handleReceivedPacket() {
   const float snr = LoRa.packetSnr();
   const int16_t snrX10 = static_cast<int16_t>(snr * 10.0f);
 
+  if (packet.header.messageType == MessageType::ACK &&
+      packet.header.payloadLength >= 7) {
+    const uint8_t acknowledgedOrigin = packet.payload[0];
+    const uint32_t acknowledgedSequence = readU32LittleEndian(packet.payload + 1);
+    const bool matched = gReliability.acknowledge(
+        acknowledgedOrigin, acknowledgedSequence);
+    emitEvent("ACK", acknowledgedOrigin, acknowledgedSequence,
+              matched ? PacketOutcome::ACKED : PacketOutcome::RECEIVED,
+              packet.header.senderId, packet.header.hopCount, packet.header.ttl,
+              rssi, snr, gForwardQueue.size());
+    refreshNodeState();
+    LoRa.receive();
+    return;
+  }
+
   if (packet.header.messageType == MessageType::HELLO) {
     const bool updated = gNeighbors.updateFromHello(
         packet, static_cast<int16_t>(rssi), snrX10, millis());
@@ -257,9 +302,7 @@ void handleReceivedPacket() {
   if (packet.header.destinationId != SahayakConfig::kNodeId &&
       packet.header.destinationId != kBroadcastNode) {
     if (packet.header.messageType == MessageType::REPORT) {
-      const uint8_t nextHop = gNeighbors.selectNextHop(
-          SahayakConfig::kNodeId, packet.header.senderId, millis(),
-          routingWeights());
+      const uint8_t nextHop = chooseNextHop(packet.header.senderId);
       const ForwardingDecision decision = prepareForward(
           packet, SahayakConfig::kNodeId, nextHop,
           millis(), gDuplicateCache, gForwardQueue);
@@ -267,6 +310,10 @@ void handleReceivedPacket() {
                 packet.header.sequence, decision.outcome,
                 decision.nextHop, packet.header.hopCount, packet.header.ttl,
                 rssi, snr, gForwardQueue.size());
+      if (decision.outcome == PacketOutcome::QUEUED ||
+          decision.outcome == PacketOutcome::DUPLICATE) {
+        sendAck(packet);
+      }
     } else {
       emitEvent(messageTypeName(packet.header.messageType), packet.header.originId,
                 packet.header.sequence, PacketOutcome::NO_ROUTE,
@@ -310,7 +357,33 @@ void flushForwardQueue() {
 
   QueuedPacket queued{};
   if (!gForwardQueue.dequeue(queued)) return;
-  sendPacket(queued.packet, queued.nextHop);
+  sendPacket(queued.packet, queued.nextHop,
+             queued.packet.header.messageType == MessageType::REPORT);
+}
+
+void handleReliability() {
+  PendingTransmission pending{};
+  const uint32_t nowMs = millis();
+
+  if (gReliability.prepareRetry(nowMs, SahayakConfig::kAckTimeoutMs, pending)) {
+    gNodeState = NodeState::RETRYING;
+    emitEvent(messageTypeName(pending.packet.header.messageType),
+              pending.packet.header.originId, pending.packet.header.sequence,
+              PacketOutcome::RETRY_LIMIT_REACHED, pending.nextHop,
+              pending.packet.header.hopCount, pending.packet.header.ttl,
+              0, 0.0f, gForwardQueue.size(), pending.retryCount);
+    sendPacket(pending.packet, pending.nextHop, false);
+  }
+
+  if (gReliability.expireExhausted(nowMs, SahayakConfig::kAckTimeoutMs,
+                                   pending)) {
+    emitEvent(messageTypeName(pending.packet.header.messageType),
+              pending.packet.header.originId, pending.packet.header.sequence,
+              PacketOutcome::RETRY_LIMIT_REACHED, pending.nextHop,
+              pending.packet.header.hopCount, pending.packet.header.ttl,
+              0, 0.0f, gForwardQueue.size(), pending.retryCount);
+  }
+  refreshNodeState();
 }
 
 void handleSerialCommand() {
@@ -361,6 +434,7 @@ void setup() {
 void loop() {
   refreshNodeState();
   handleReceivedPacket();
+  handleReliability();
   flushForwardQueue();
   handleEmergencyButton();
   handleSerialCommand();

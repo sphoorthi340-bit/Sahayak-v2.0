@@ -49,6 +49,12 @@ class NeighborManager {
   uint8_t selectNextHop(uint8_t localId, uint8_t previousHop,
                         uint32_t nowMs,
                         RoutingWeights weights = kDefaultRoutingWeights) const;
+  int16_t routeScoreFor(uint8_t nodeId, uint32_t nowMs,
+                        RoutingWeights weights = kDefaultRoutingWeights) const;
+  uint8_t selectStableNextHop(uint8_t localId, uint8_t previousHop,
+                              uint8_t currentHop, uint32_t nowMs,
+                              RoutingWeights weights = kDefaultRoutingWeights,
+                              int16_t hysteresisPoints = 5) const;
 
  private:
   NeighborRecord records_[kNeighborTableCapacity];

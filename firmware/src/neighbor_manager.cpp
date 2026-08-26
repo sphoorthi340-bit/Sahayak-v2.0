@@ -184,6 +184,53 @@ uint8_t NeighborManager::selectNextHop(uint8_t localId, uint8_t previousHop,
   return bestNode;
 }
 
+int16_t NeighborManager::routeScoreFor(uint8_t nodeId, uint32_t nowMs,
+                                       RoutingWeights weights) const {
+  const NeighborRecord* record = find(nodeId, nowMs);
+  if (record == nullptr || record->nodeState != NodeState::CONNECTED &&
+      record->nodeState != NodeState::DEGRADED ||
+      record->advertisedHopCount == kUnknownHopCount) {
+    return -1;
+  }
+
+  const uint16_t weightTotal = static_cast<uint16_t>(weights.rssi) +
+                               static_cast<uint16_t>(weights.hop) +
+                               static_cast<uint16_t>(weights.queue);
+  if (weightTotal == 0) return -1;
+  const int32_t rssiScore = constrain(
+      static_cast<int32_t>(record->lastRssiDbm) + 120, 0, 55) * 100 / 55;
+  const int32_t hopScore = 100 /
+      (static_cast<int32_t>(record->advertisedHopCount) + 1);
+  const int32_t queueScore = 100 /
+      (static_cast<int32_t>(record->queueLength) + 1);
+  return static_cast<int16_t>(
+      (static_cast<int32_t>(weights.rssi) * rssiScore +
+       static_cast<int32_t>(weights.hop) * hopScore +
+       static_cast<int32_t>(weights.queue) * queueScore) /
+      weightTotal);
+}
+
+uint8_t NeighborManager::selectStableNextHop(
+    uint8_t localId, uint8_t previousHop, uint8_t currentHop,
+    uint32_t nowMs, RoutingWeights weights, int16_t hysteresisPoints) const {
+  const uint8_t challenger = selectNextHop(localId, previousHop, nowMs, weights);
+  const int16_t currentScore = routeScoreFor(currentHop, nowMs, weights);
+
+  if (currentHop == kBroadcastNode || currentHop == previousHop ||
+      currentScore < 0) {
+    return challenger;
+  }
+  if (challenger == kBroadcastNode || challenger == currentHop) {
+    return currentHop;
+  }
+
+  const int16_t challengerScore = routeScoreFor(challenger, nowMs, weights);
+  if (challengerScore >= currentScore + hysteresisPoints) {
+    return challenger;
+  }
+  return currentHop;
+}
+
 NodeState routeHealthState(const NeighborManager& neighbors, uint8_t localId,
                            uint8_t baseStationId, uint8_t staticNextHop,
                            uint32_t nowMs) {

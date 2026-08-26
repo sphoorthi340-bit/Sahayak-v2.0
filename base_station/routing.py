@@ -66,3 +66,35 @@ def select_next_hop(candidates: list[RouteCandidate],
             -candidate.next_hop,
         ),
     )
+
+
+@dataclass
+class StableRouteSelector:
+    """Retain a valid route unless a challenger exceeds the score margin."""
+
+    hysteresis: float = 0.05
+    current_next_hop: int | None = None
+
+    def select(self, candidates: list[RouteCandidate],
+               weights: RoutingWeights = RoutingWeights(),
+               max_age_ms: int = 30_000) -> RouteCandidate | None:
+        candidate = select_next_hop(candidates, weights, max_age_ms)
+        current = next(
+            (item for item in candidates
+             if item.next_hop == self.current_next_hop
+             and item.healthy and 0 <= item.age_ms <= max_age_ms),
+            None,
+        )
+
+        if current is None:
+            self.current_next_hop = candidate.next_hop if candidate else None
+            return candidate
+        if candidate is None or candidate.next_hop == current.next_hop:
+            return current
+
+        current_score = route_score(current, weights)
+        candidate_score = route_score(candidate, weights)
+        if candidate_score >= current_score + self.hysteresis:
+            self.current_next_hop = candidate.next_hop
+            return candidate
+        return current

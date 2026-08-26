@@ -17,6 +17,7 @@ constexpr uint8_t kStaticNextHop = 1;
 constexpr uint8_t kRssiWeight = 50;
 constexpr uint8_t kHopWeight = 25;
 constexpr uint8_t kQueueWeight = 25;
+constexpr int16_t kRouteHysteresisPoints = 5;
 
 // Confirm these against the purchased radio module and local operating rules.
 // Provisional in-band test frequency; confirm the permitted channel before RF testing.

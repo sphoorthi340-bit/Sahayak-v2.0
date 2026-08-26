@@ -30,3 +30,40 @@ def test_weights_are_configurable():
     selected = select_next_hop(candidates, weights=hop_queue)
     assert selected is not None
     assert selected.next_hop == 3
+
+
+from base_station.routing import StableRouteSelector
+
+
+def test_hysteresis_retains_current_route_for_small_improvement():
+    selector = StableRouteSelector(hysteresis=0.10, current_next_hop=2)
+    candidates = [
+        RouteCandidate(next_hop=2, rssi_dbm=-90, hop_count=2, queue_length=1),
+        RouteCandidate(next_hop=3, rssi_dbm=-89, hop_count=2, queue_length=1),
+    ]
+    selected = selector.select(candidates)
+    assert selected is not None
+    assert selected.next_hop == 2
+
+
+def test_hysteresis_switches_for_meaningful_improvement():
+    selector = StableRouteSelector(hysteresis=0.01, current_next_hop=2)
+    candidates = [
+        RouteCandidate(next_hop=2, rssi_dbm=-105, hop_count=3, queue_length=8),
+        RouteCandidate(next_hop=3, rssi_dbm=-75, hop_count=1, queue_length=0),
+    ]
+    selected = selector.select(candidates)
+    assert selected is not None
+    assert selected.next_hop == 3
+
+
+def test_hysteresis_switches_when_current_route_expires():
+    selector = StableRouteSelector(hysteresis=0.10, current_next_hop=2)
+    candidates = [
+        RouteCandidate(next_hop=2, rssi_dbm=-80, hop_count=1, queue_length=0,
+                       age_ms=31_000),
+        RouteCandidate(next_hop=3, rssi_dbm=-95, hop_count=2, queue_length=2),
+    ]
+    selected = selector.select(candidates)
+    assert selected is not None
+    assert selected.next_hop == 3

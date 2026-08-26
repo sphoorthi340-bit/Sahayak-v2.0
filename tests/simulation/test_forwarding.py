@@ -74,3 +74,32 @@ def test_queue_overflow_is_explicit():
     second = forwarder.process(packet(sequence=11), next_hop=1, now_ms=100)
     assert first.reason == "QUEUED"
     assert second.reason == "QUEUE_FULL"
+
+
+from base_station.reliability import ReliabilityManager
+
+
+def test_ack_clears_pending_transmission():
+    manager = ReliabilityManager()
+    assert manager.track(packet(sequence=40), next_hop=2, now_ms=0)
+    assert manager.acknowledge(origin_id=5, sequence=40)
+    assert manager.pending == []
+
+
+def test_retry_is_due_then_exhaustion_is_reported():
+    manager = ReliabilityManager()
+    assert manager.track(packet(sequence=41), next_hop=2, now_ms=0,
+                         max_retries=1)
+    retry = manager.due_retry(now_ms=2_500, timeout_ms=2_500)
+    assert retry is not None
+    assert retry.retry_count == 1
+    exhausted = manager.expire_exhausted(now_ms=5_000, timeout_ms=2_500)
+    assert exhausted is not None
+    assert exhausted.retry_count == 1
+    assert manager.pending == []
+
+
+def test_pending_capacity_is_bounded():
+    manager = ReliabilityManager(max_pending=1)
+    assert manager.track(packet(sequence=50), next_hop=2, now_ms=0)
+    assert not manager.track(packet(sequence=51), next_hop=2, now_ms=0)

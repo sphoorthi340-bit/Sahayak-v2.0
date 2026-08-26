@@ -16,11 +16,13 @@ The current firmware scaffold implements:
 - RSSI/SNR and advertised-hop tracking for each fresh neighbor.
 - 30-second stale-neighbor expiry.
 - `DISCOVER_NEIGHBORS`, `CONNECTED`, `DEGRADED`, `AT_RISK`, and `ISOLATED` route-health states.
+- Route hysteresis using a configurable score-improvement margin.
+- Hop-by-hop report ACK tracking, bounded retries, timeout handling, and retry-exhaustion telemetry.
 - Radio CRC enablement.
 - RSSI and SNR telemetry.
 - Machine-readable serial `EVENT` records.
 
-Three-node forwarding is now implemented using a configurable static next hop. Neighbor discovery and route expiry are active, but dynamic multi-metric next-hop selection is still disabled until this milestone has been tested on real hardware.
+Dynamic multi-metric next-hop selection, route hysteresis, and hop-by-hop report ACK/retry behavior are now implemented. Physical hardware testing is still required to calibrate the timeout, verify ACK paths, and measure real packet loss.
 
 ## Build with PlatformIO
 
@@ -59,4 +61,4 @@ Set the node identity and pins in [`include/config.h`](include/config.h) before 
 
 ## Important limitations
 
-The current forwarding milestone uses a static next hop configured in `include/config.h`. Set the field node’s next hop to the relay ID and the relay node’s next hop to the base ID before flashing. Dynamic route selection will replace this configuration later.
+The current firmware no longer requires a static next hop for normal report forwarding. `kStaticNextHop` remains in the configuration as a reference for the original three-node test, while the active selector uses fresh-neighbor metrics and the configured routing weights.
