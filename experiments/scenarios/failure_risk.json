@@ -1,0 +1,20 @@
+{
+  "scenario_id": "failure-risk-001",
+  "base_station": 1,
+  "nodes": [2, 3, 4, 5, 6],
+  "links": [
+    {"source": 5, "destination": 2, "last_heard_ms": 1000, "rssi": -95, "snr": 7.0},
+    {"source": 5, "destination": 3, "last_heard_ms": 1000, "rssi": -98, "snr": 6.0},
+    {"source": 5, "destination": 4, "last_heard_ms": 1000, "rssi": -90, "snr": 8.0},
+    {"source": 2, "destination": 1, "last_heard_ms": 1000, "rssi": -92, "snr": 7.0},
+    {"source": 3, "destination": 1, "last_heard_ms": 1000, "rssi": -94, "snr": 6.5},
+    {"source": 4, "destination": 6, "last_heard_ms": 1000, "rssi": -97, "snr": 6.0},
+    {"source": 6, "destination": 1, "last_heard_ms": 1000, "rssi": -95, "snr": 6.5}
+  ],
+  "failure_cases": [
+    {"case_id": "healthy", "failed_nodes": []},
+    {"case_id": "relay_2_failed", "failed_nodes": [2]},
+    {"case_id": "relay_2_and_3_failed", "failed_nodes": [2, 3]},
+    {"case_id": "relay_2_3_6_failed", "failed_nodes": [2, 3, 6]}
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "scenario_id": "routing-comparison-001",
+  "description": "Compare bounded flooding, RSSI-only, and adaptive routing on a fixed six-node graph",
+  "source": 5,
+  "destination": 1,
+  "packet_count": 100,
+  "max_retries": 2,
+  "max_hops": 8,
+  "seed": 42,
+  "failure_nodes": [],
+  "links": [
+    {"source": 5, "destination": 3, "rssi_dbm": -95, "latency_ms": 450, "queue_length": 1},
+    {"source": 3, "destination": 1, "rssi_dbm": -90, "latency_ms": 450, "queue_length": 4},
+    {"source": 5, "destination": 2, "rssi_dbm": -100, "latency_ms": 500, "queue_length": 0},
+    {"source": 2, "destination": 1, "rssi_dbm": -93, "latency_ms": 500, "queue_length": 0},
+    {"source": 5, "destination": 4, "rssi_dbm": -88, "latency_ms": 400, "queue_length": 7},
+    {"source": 4, "destination": 1, "rssi_dbm": -98, "latency_ms": 400, "queue_length": 0}
+  ]
+}
