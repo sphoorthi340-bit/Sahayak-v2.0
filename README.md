@@ -57,6 +57,9 @@ Read these files first:
 - [`docs/decisions.md`](docs/decisions.md)
 - [`hardware/README.md`](hardware/README.md)
 - [`hardware/bom.md`](hardware/bom.md)
+- [`hardware/bringup_checklist.md`](hardware/bringup_checklist.md)
 - [`base_station/README.md`](base_station/README.md)
+- [`docs/software_first_status.md`](docs/software_first_status.md)
+- [`tests/README.md`](tests/README.md)
 
-The firmware scaffold is intentionally conservative. It does not yet implement the complete mesh algorithm. It establishes the packet format, serial telemetry, and a testable two-node communication foundation.
+The firmware scaffold is intentionally conservative. It does not yet implement the complete mesh algorithm. It establishes the packet format, serial telemetry, and a testable two-node communication foundation. The software-only simulator now supports deterministic routing comparisons and controlled failure-risk scenarios while physical hardware testing is postponed.
