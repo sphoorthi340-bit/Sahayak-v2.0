@@ -55,7 +55,8 @@ Read these files first:
 - [`docs/pin_map.md`](docs/pin_map.md)
 - [`docs/test_plan.md`](docs/test_plan.md)
 - [`docs/decisions.md`](docs/decisions.md)
-- [`firmware/README.md`](firmware/README.md)
+- [`hardware/README.md`](hardware/README.md)
+- [`hardware/bom.md`](hardware/bom.md)
 - [`base_station/README.md`](base_station/README.md)
 
 The firmware scaffold is intentionally conservative. It does not yet implement the complete mesh algorithm. It establishes the packet format, serial telemetry, and a testable two-node communication foundation.

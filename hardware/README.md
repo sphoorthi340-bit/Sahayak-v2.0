@@ -2,6 +2,8 @@
 
 ## First prototype target
 
+The procurement baseline is documented in [`bom.md`](bom.md), and the first physical test procedure is in [`bringup_checklist.md`](bringup_checklist.md).
+
 Build two identical USB-powered nodes first. Each node should contain:
 
 - ESP32 DevKit-class board.

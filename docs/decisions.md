@@ -33,3 +33,7 @@ The first base station is a Python command-line receiver with SQLite logging. A 
 ## ADR-008: Log failures as carefully as successes
 
 Invalid packets, duplicates, no-route outcomes, TTL expiry, queue overflow, and retry exhaustion must be retained. Failure records are necessary for debugging and for honest paper evaluation.
+
+## ADR-009: Freeze the first procurement baseline
+
+The team will proceed with ESP32 DevKit-class boards, explicitly verified 868 MHz SX1276-class LoRa radios, matched antennas, SSD1306 OLED displays, emergency buttons, status indicators, and stable USB power for the initial bring-up. Batteries, charging circuits, enclosures, and current monitors will be introduced after the two-node communication milestone is stable. The detailed checklist is maintained in `hardware/bom.md`.

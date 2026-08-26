@@ -24,11 +24,11 @@ Node IDs are unsigned 8-bit values.
 The exact values must be frozen after the team confirms the purchased radio module and the applicable local operating rules.
 
 ```text
-frequency_mhz       = 868.1
+frequency_mhz       = 866.5
 bandwidth_hz        = 125000
 spreading_factor    = 7
 coding_rate         = 5
-transmit_power_dbm  = module-dependent
+transmit_power_dbm  = 14 (provisional; confirm module and local limit)
 crc                 = enabled
 sync_word           = project-specific
 ```

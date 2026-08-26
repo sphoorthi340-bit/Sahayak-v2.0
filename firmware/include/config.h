@@ -9,11 +9,13 @@ constexpr uint8_t kNodeId = 2;
 constexpr uint8_t kBaseStationId = 1;
 
 // Confirm these against the purchased radio module and local operating rules.
-constexpr long kLoRaFrequencyHz = 868100000L;
+// Provisional in-band test frequency; confirm the permitted channel before RF testing.
+constexpr long kLoRaFrequencyHz = 866500000L;
 constexpr long kLoRaBandwidthHz = 125000L;
 constexpr uint8_t kLoRaSpreadingFactor = 7;
 constexpr uint8_t kLoRaCodingRateDenominator = 5;
-constexpr int8_t kLoRaTxPowerDbm = 17;
+// Keep this conservative until the module, antenna, and local RF limits are confirmed.
+constexpr int8_t kLoRaTxPowerDbm = 14;
 
 // Example SPI and radio-control pins for a standard ESP32 DevKit.
 constexpr int kLoRaCsPin = 5;
