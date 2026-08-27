@@ -67,6 +67,7 @@ Read these files first:
 - [`hardware/bringup_checklist.md`](hardware/bringup_checklist.md)
 - [`base_station/README.md`](base_station/README.md)
 - [`docs/software_first_status.md`](docs/software_first_status.md)
+- [`docs/software_only_plan.md`](docs/software_only_plan.md)
 - [`tests/README.md`](tests/README.md)
 - [`tests/hardware/two_node_pair_test.md`](tests/hardware/two_node_pair_test.md)
 

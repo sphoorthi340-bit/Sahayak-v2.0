@@ -1,0 +1,10 @@
+# source=synthetic; never use as field evidence
+Sahayak v2.0 firmware booting
+EVENT,t_ms=100,node=1,type=BOOT,origin=1,seq=0,prev=255,next=255,hop=0,ttl=0,rssi=0,snr=0,queue=0,retry=0,state=CONNECTED,outcome=CREATED
+EVENT,t_ms=110,node=2,type=BOOT,origin=2,seq=0,prev=255,next=255,hop=0,ttl=0,rssi=0,snr=0,queue=0,retry=0,state=DISCOVER_NEIGHBORS,outcome=CREATED
+EVENT,t_ms=1000,node=1,type=HELLO,origin=1,seq=1,prev=255,next=255,hop=0,ttl=8,rssi=-72,snr=9.2,queue=0,retry=0,state=CONNECTED,outcome=RECEIVED
+EVENT,t_ms=1010,node=2,type=HELLO,origin=1,seq=1,prev=255,next=255,hop=0,ttl=8,rssi=-74,snr=8.8,queue=0,retry=0,state=CONNECTED,outcome=RECEIVED
+EVENT,t_ms=2000,node=2,type=REPORT,origin=2,seq=1,prev=255,next=1,hop=0,ttl=8,rssi=0,snr=0,queue=0,retry=0,state=CONNECTED,outcome=FORWARDED
+EVENT,t_ms=2050,node=1,type=REPORT,origin=2,seq=1,prev=2,next=1,hop=1,ttl=7,rssi=-75,snr=8.4,queue=0,retry=0,state=CONNECTED,outcome=DELIVERED
+EVENT,t_ms=2060,node=1,type=ACK,origin=1,seq=1,prev=255,next=2,hop=0,ttl=8,rssi=-75,snr=8.4,queue=0,retry=0,state=CONNECTED,outcome=FORWARDED
+EVENT,t_ms=2110,node=2,type=ACK,origin=1,seq=1,prev=1,next=2,hop=0,ttl=8,rssi=-74,snr=8.8,queue=0,retry=0,state=CONNECTED,outcome=ACKED
