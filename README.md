@@ -66,6 +66,10 @@ Read these files first:
 - [`hardware/bom.md`](hardware/bom.md)
 - [`hardware/bringup_checklist.md`](hardware/bringup_checklist.md)
 - [`base_station/README.md`](base_station/README.md)
+- `base_station/data_quality.py`
+- `base_station/experiment_runner.py`
+- `base_station/report_generator.py`
+- `base_station/commands.py`
 - [`docs/software_first_status.md`](docs/software_first_status.md)
 - [`docs/software_only_plan.md`](docs/software_only_plan.md)
 - [`tests/README.md`](tests/README.md)
