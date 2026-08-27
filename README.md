@@ -58,6 +58,7 @@ Read these files first:
 - [`docs/human_relay.md`](docs/human_relay.md)
 - [`docs/priority_experiments.md`](docs/priority_experiments.md)
 - [`docs/progress_and_hardware_report.md`](docs/progress_and_hardware_report.md)
+- [`docs/friend_agent_handoff.md`](docs/friend_agent_handoff.md)
 - [`docs/pin_map.md`](docs/pin_map.md)
 - [`docs/test_plan.md`](docs/test_plan.md)
 - [`docs/decisions.md`](docs/decisions.md)
